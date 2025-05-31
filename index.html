@@ -40,7 +40,7 @@
 </head>
 <body class="bg-midnight-900 text-white font-sans min-h-screen flex flex-col items-center justify-center p-4 selection:bg-blue-500 selection:text-white">
   <div class="bg-midnight-800 text-white shadow-2xl p-6 max-w-3xl w-full space-y-6">
-    <h1 class="text-3xl font-bold text-center text-blue-400">Math Renderer</h1>
+    <h1 class="text-3xl font-bold text-center text-blue-400">LaTeX Renderer</h1>
 
     <textarea
       id="latexInput"
@@ -63,10 +63,18 @@
         <button id="bgToggleWhite" class="bg-gray-200 text-gray-800 hover:bg-gray-300 px-3 py-1.5 rounded text-sm font-medium">White / Black Text</button>
         <button id="bgToggleBlack" class="bg-gray-600 hover:bg-gray-500 text-white px-3 py-1.5 rounded text-sm font-medium">Black / White Text</button>
       </div>
-      <div class="flex items-center gap-4 pt-2">
-        <label for="scaleSlider" class="text-gray-300">Export Scale:</label>
-        <input type="range" id="scaleSlider" min="1" max="5" value="5" step="0.1" class="w-48">
-        <span id="scaleValue" class="text-gray-300">5.0×</span>
+      <div class="flex items-center gap-6 pt-4 bg-gray-800 p-4 rounded-md w-max">
+        <label for="scaleSlider" class="text-gray-300 font-medium whitespace-nowrap">Export Scale:</label>
+        <input 
+          type="range" 
+          id="scaleSlider" 
+          min="1" 
+          max="10" 
+          value="5" 
+          step="0.1" 
+          class="w-56 h-2 rounded-full bg-gray-600 accent-indigo-500 cursor-pointer transition duration-200 hover:accent-indigo-400"
+        >
+        <span id="scaleValue" class="text-indigo-400 font-semibold min-w-[3ch] text-right tabular-nums">5.0×</span>
       </div>
       <div class="flex flex-wrap justify-end gap-3">
         <button id="exportTransparentPNG" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded">Export as Transparent PNG</button>
