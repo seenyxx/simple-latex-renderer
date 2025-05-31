@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let exportBackgroundColor = 'white';
     
-    let exportScale = 2.0;
+    let exportScale = 5.0;
 
     const scaleSlider = document.getElementById('scaleSlider');
     const scaleValue = document.getElementById('scaleValue');
