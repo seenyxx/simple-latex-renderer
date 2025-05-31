@@ -1,3 +1,4 @@
+
 document.addEventListener('DOMContentLoaded', () => {
     const latexInput = document.getElementById('latexInput');
     const outputDiv = document.getElementById('output');
@@ -6,9 +7,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const bgToggleWhiteButton = document.getElementById('bgToggleWhite');
     const bgToggleBlackButton = document.getElementById('bgToggleBlack');
 
-    let exportBackgroundColor = 'white'; // Default opaque background color
+    let exportBackgroundColor = 'white';
+    
+    let exportScale = 2.0;
 
-    // --- Utility Functions ---
+    const scaleSlider = document.getElementById('scaleSlider');
+    const scaleValue = document.getElementById('scaleValue');
+
+    scaleSlider.addEventListener('input', () => {
+        exportScale = parseFloat(scaleSlider.value);
+        scaleValue.textContent = `${exportScale.toFixed(1)}×`;
+    });
+
+
     const getTimestampFilename = (prefix, extension) => {
         const now = new Date();
         const ts = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
@@ -24,10 +35,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.removeChild(link);
     };
 
-    // --- KaTeX Rendering ---
     const renderLatex = () => {
         const latexCode = latexInput.value.trim();
-        outputDiv.innerHTML = ''; // Clear previous output
+        outputDiv.innerHTML = '';
 
         if (latexCode === '') {
             outputDiv.innerHTML = '<span class="text-gray-500">Preview will appear here...</span>';
@@ -58,7 +68,6 @@ document.addEventListener('DOMContentLoaded', () => {
         outputDiv.innerHTML = '<span class="text-gray-500">Preview will appear here...</span>';
     }
 
-    // --- Background Toggle Logic ---
     bgToggleWhiteButton.addEventListener('click', () => {
         exportBackgroundColor = 'white';
         bgToggleWhiteButton.classList.add('ring-2', 'ring-offset-2', 'ring-offset-gray-800', 'ring-blue-500');
@@ -73,52 +82,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
     bgToggleWhiteButton.click();
 
-    // --- Export PNG Functions ---
-
-    function exportPNG(isTransparent) {
+    async function exportPNG(isTransparent) {
         if (!outputDiv.innerHTML.trim() || outputDiv.innerHTML.includes('Preview will appear here')) {
             alert('Nothing to export!');
             return;
         }
 
+        await document.fonts.ready;
+
         const clone = outputDiv.cloneNode(true);
-
-        // Set background and text color based on transparent or opaque mode
-        if (isTransparent) {
-            clone.style.backgroundColor = 'transparent';
-            clone.style.color = 'black';  // You can adjust default text color here for transparent bg
-        } else {
-            clone.style.backgroundColor = exportBackgroundColor;
-            clone.style.color = (exportBackgroundColor === 'black') ? 'white' : 'black';
-        }
-
-        clone.style.border = 'none';
-        clone.style.borderRadius = '0';
-        clone.style.padding = '10px';  // keep padding consistent
+        clone.style.backgroundColor = isTransparent ? 'transparent' : exportBackgroundColor;
+        clone.style.color = isTransparent ? 'black' : (exportBackgroundColor === 'black' ? 'white' : 'black');
+        clone.style.padding = '10px';
         clone.style.width = outputDiv.offsetWidth + 'px';
         clone.style.height = outputDiv.offsetHeight + 'px';
-
-        clone.style.position = 'fixed';
-        clone.style.top = '-9999px';
-        clone.style.left = '-9999px';
-        clone.style.zIndex = '-1000';
         clone.style.boxSizing = 'border-box';
+        clone.style.border = 'none';
+        clone.style.borderRadius = '0';
 
-        document.body.appendChild(clone);
+        const container = document.createElement('div');
+        container.style.position = 'absolute';
+        container.style.top = '-10000px';
+        container.style.left = '-10000px';
+        container.appendChild(clone);
+        document.body.appendChild(container);
 
-        html2canvas(clone, {
-            backgroundColor: isTransparent ? null : exportBackgroundColor,
-            scale: 3,
-            useCORS: true,
-        }).then(canvas => {
-            const pngURI = canvas.toDataURL('image/png');
-            triggerDownload(pngURI, getTimestampFilename('latex_export', 'png'));
-        }).catch(err => {
-            console.error('html2canvas error:', err);
-            alert('Failed to export PNG image.');
-        }).finally(() => {
-            document.body.removeChild(clone);
-        });
+        try {
+            const dataUrl = await modernScreenshot.domToPng(clone, {
+                scale: exportScale,
+                fetch: {
+                    requestInit: { mode: 'cors' },
+                    bypassingCache: true,
+                },
+            });
+            triggerDownload(dataUrl, getTimestampFilename('latex-export', 'png'));
+        } catch (err) {
+            console.error('Export error:', err);
+            alert('Failed to export image.');
+        } finally {
+            document.body.removeChild(container);
+        }
     }
 
     exportTransparentPNGButton.addEventListener('click', () => exportPNG(true));
