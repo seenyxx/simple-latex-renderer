@@ -1,3 +1,18 @@
+const LATEX_PREAMBLE = `
+\\newcommand{\\lp}{\\left(}  
+\\newcommand{\\rp}{\\right)}
+\\newcommand{\\lb}{\\left[}  
+\\newcommand{\\rb}{\\right]}
+\\newcommand{\\lc}{\\left\\{}
+\\newcommand{\\rc}{\\right\\}}
+\\newcommand{\\s}{\\sin}
+\\renewcommand{\\c}{\\cos}
+\\newcommand{\\proj}[2]{\\operatorname{proj}_{\\mathbf{#1}} \\mathbf{#2}}
+
+\n
+
+`
+
 
 document.addEventListener('DOMContentLoaded', () => {
     const latexInput = document.getElementById('latexInput');
@@ -36,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const renderLatex = () => {
-        const latexCode = latexInput.value.trim();
+        const latexCode = LATEX_PREAMBLE + latexInput.value.trim();
         outputDiv.innerHTML = '';
 
         if (latexCode === '') {
