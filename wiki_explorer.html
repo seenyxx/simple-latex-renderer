@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WikiExplorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #111318;
+  --surface:  #1a1d27;
+  --surface2: #22263a;
+  --bd:       #2a2f42;
+  --bd2:      #343b54;
+  --text:     #e8e4dc;
+  --sub:      #c0bcb4;
+  --muted:    #7a8099;
+  --gold:     #c9a84c;
+
+  --lit:  #d4845a;  --lit-d:  rgba(212,132,90,.1);  --lit-bd:  rgba(212,132,90,.35);
+  --geo:  #5ba3d4;  --geo-d:  rgba(91,163,212,.1);  --geo-bd:  rgba(91,163,212,.35);
+  --hist: #a47fd4;  --hist-d: rgba(164,127,212,.1); --hist-bd: rgba(164,127,212,.35);
+  --cult: #5db88a;  --cult-d: rgba(93,184,138,.1);  --cult-bd: rgba(93,184,138,.35);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+/* ───────── NAV ───────── */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 0 28px;
+  background: rgba(17,19,24,.88);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid var(--bd);
+}
+
+.logo {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -.02em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.logo-orb {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--gold);
+  flex-shrink: 0;
+}
+
+.nav-cats {
+  display: flex;
+  gap: 3px;
+  flex: 1;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.cat-btn {
+  padding: 6px 15px;
+  border-radius: 100px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .18s;
+  white-space: nowrap;
+}
+
+.cat-btn:hover { color: var(--text); border-color: var(--bd2); }
+
+.cat-btn.active[data-t="literature"] { color: var(--lit);  background: var(--lit-d);  border-color: var(--lit-bd); }
+.cat-btn.active[data-t="geopolitics"]{ color: var(--geo);  background: var(--geo-d);  border-color: var(--geo-bd); }
+.cat-btn.active[data-t="history"]    { color: var(--hist); background: var(--hist-d); border-color: var(--hist-bd);}
+.cat-btn.active[data-t="culture"]    { color: var(--cult); background: var(--cult-d); border-color: var(--cult-bd);}
+
+#discBtn {
+  padding: 7px 18px;
+  border-radius: 8px;
+  border: 1px solid var(--bd2);
+  background: var(--surface);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .18s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+#discBtn:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); }
+#discBtn:disabled { opacity: .3; cursor: not-allowed; }
+
+/* ───────── MAIN ───────── */
+main {
+  min-height: calc(100vh - 58px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Landing */
+.landing {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 18px;
+  padding: 60px 24px;
+}
+
+.landing h1 {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 56px;
+  font-weight: 400;
+  line-height: 1.13;
+  color: var(--text);
+}
+
+.landing h1 em { font-style: italic; color: var(--gold); }
+
+.landing p {
+  font-size: 15px;
+  color: var(--muted);
+  max-width: 340px;
+  line-height: 1.65;
+}
+
+.landing-hint {
+  font-size: 12px;
+  color: var(--bd2);
+  letter-spacing: .06em;
+}
+
+/* Loading */
+.loader {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+.dots { display: flex; gap: 7px; }
+
+.dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+  animation: dp 1.3s ease-in-out infinite;
+}
+.dot:nth-child(2) { animation-delay: .15s; }
+.dot:nth-child(3) { animation-delay: .3s; }
+
+@keyframes dp {
+  0%,80%,100% { opacity:.2; transform:scale(.7); }
+  40%          { opacity:1;  transform:scale(1); }
+}
+
+.loader p { font-size: 13px; color: var(--muted); }
+
+/* Article */
+.art-wrap {
+  width: 100%;
+  max-width: 840px;
+  padding: 48px 40px 100px;
+  animation: fadeUp .35s ease;
+}
+
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(10px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+.art-super {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  margin-bottom: 14px;
+}
+
+.art-title {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 48px;
+  font-weight: 400;
+  line-height: 1.13;
+  color: var(--text);
+  margin-bottom: 20px;
+}
+
+.art-bar {
+  display: flex;
+  gap: 8px;
+  padding-bottom: 30px;
+  border-bottom: 1px solid var(--bd);
+  margin-bottom: 36px;
+  flex-wrap: wrap;
+}
+
+.art-btn {
+  padding: 7px 14px;
+  border-radius: 7px;
+  border: 1px solid var(--bd2);
+  background: transparent;
+  color: var(--muted);
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all .15s;
+}
+
+.art-btn:hover { color: var(--text); background: var(--surface); border-color: var(--bd2); }
+
+/* ───────── WIKIPEDIA CONTENT ───────── */
+.wiki {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 19.5px;
+  line-height: 1.83;
+  color: var(--sub);
+}
+
+.wiki > *:first-child { margin-top: 0; }
+
+.wiki p { margin-bottom: 1.1em; }
+
+.wiki h2 {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 30px;
+  font-weight: 400;
+  margin: 2.2em 0 .5em;
+  padding-bottom: .3em;
+  border-bottom: 1px solid var(--bd2);
+  color: var(--text);
+}
+
+.wiki h3 {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 24px;
+  font-weight: 400;
+  margin: 1.6em 0 .4em;
+  color: var(--text);
+}
+
+.wiki h4 {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--muted);
+  margin: 1.4em 0 .3em;
+}
+
+.wiki a {
+  color: var(--sub);
+  text-decoration: underline;
+  text-decoration-color: var(--bd2);
+  text-underline-offset: 3px;
+  transition: text-decoration-color .15s, color .15s;
+}
+
+.wiki a:hover { color: var(--text); text-decoration-color: var(--muted); }
+
+.wiki ul, .wiki ol { padding-left: 1.6em; margin-bottom: 1.1em; }
+.wiki li { margin-bottom: .3em; }
+
+.wiki img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  border: 1px solid var(--bd2);
+  display: block;
+}
+
+.wiki blockquote {
+  border-left: 3px solid var(--bd2);
+  margin: 1.5em 0;
+  padding: .8em 1.4em;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* Thumb (image + caption containers) */
+.wiki .thumb {
+  font-family: 'Inter', sans-serif;
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin: .5em 0 1.2em;
+}
+
+.wiki .thumb.tright { float: right; margin: .3em 0 1.2em 1.8em; clear: right; }
+.wiki .thumb.tleft  { float: left;  margin: .3em 1.8em 1.2em 0; clear: left; }
+
+.wiki .thumbinner {
+  width: auto !important;
+  max-width: 280px;
+  background: var(--surface);
+  border: 1px solid var(--bd2);
+  border-radius: 8px;
+  padding: 6px;
+}
+
+.wiki .thumbinner img {
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+  border: none;
+}
+
+.wiki .thumbcaption {
+  padding: 6px 4px 2px;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.wiki .magnify { display: none !important; }
+
+/* Infobox */
+.wiki .infobox,
+.wiki .infobox-3cols-child,
+.wiki .infobox-full-data,
+.wiki .vevent {
+  float: right !important;
+  margin: 0 0 1.5em 2em !important;
+  clear: right !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 12.5px !important;
+  width: auto !important;
+  max-width: 260px !important;
+  background: var(--surface) !important;
+  border: 1px solid var(--bd2) !important;
+  border-radius: 10px !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  padding: 12px !important;
+  line-height: 1.5 !important;
+  overflow: hidden;
+}
+
+.wiki .infobox td,
+.wiki .infobox th {
+  padding: 3px 5px !important;
+  border: none !important;
+  background: transparent !important;
+  text-align: left !important;
+  font-size: 12px !important;
+}
+
+.wiki .infobox th { color: var(--muted) !important; font-weight: 500 !important; }
+.wiki .infobox td { color: var(--sub) !important; }
+
+.wiki .infobox caption,
+.wiki .infobox .infobox-above,
+.wiki .infobox .infobox-title {
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  color: var(--text) !important;
+  text-align: center !important;
+  display: table-caption !important;
+  padding: 6px 4px 10px !important;
+}
+
+.wiki .infobox img {
+  max-width: 100% !important;
+  border-radius: 5px !important;
+  border: none !important;
+}
+
+/* Data tables */
+.wiki .wikitable,
+.wiki table.sortable {
+  border-collapse: collapse !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 13.5px !important;
+  margin: 1.5em 0 !important;
+  display: block !important;
+  overflow-x: auto !important;
+  max-width: 100% !important;
+  width: auto !important;
+}
+
+.wiki .wikitable td,
+.wiki .wikitable th {
+  padding: 8px 12px !important;
+  border: 1px solid var(--bd2) !important;
+  vertical-align: top !important;
+  background: transparent !important;
+}
+
+.wiki .wikitable th {
+  background: var(--surface) !important;
+  font-weight: 500 !important;
+  color: var(--text) !important;
+  text-align: left !important;
+}
+
+.wiki .wikitable.jquery-tablesorter th { cursor: pointer; }
+
+/* ── HIDE ALL WIKIPEDIA CHROME ── */
+.wiki .mw-editsection,
+.wiki .mw-editsection-bracket,
+.wiki .reflist,
+.wiki .references,
+.wiki .mw-references-wrap,
+.wiki .navbox,
+.wiki .navbox-styles,
+.wiki .navbox-inner,
+.wiki .ambox, .wiki .tmbox, .wiki .ombox,
+.wiki .fmbox, .wiki .cmbox, .wiki .imbox,
+.wiki .mbox-text, .wiki .mbox-image,
+.wiki .sistersitebox,
+.wiki .hatnote,
+.wiki #toc,
+.wiki .toc,
+.wiki .noprint,
+.wiki .mw-empty-elt,
+.wiki .mw-hidden-cat-table,
+.wiki .catlinks,
+.wiki .printfooter,
+.wiki .portalbox,
+.wiki .stub,
+.wiki .dablink,
+.wiki .shortdescription,
+.wiki .mw-authority-control,
+.wiki .cs1-format,
+.wiki .cs1-visible-error,
+.wiki .error,
+.wiki #coordinates,
+.wiki .geo-nondefault,
+.wiki .geo-multi-punct,
+.wiki .language-list { display: none !important; }
+
+.wiki sup.reference { display: none !important; }
+.wiki .wiki-contents { display: none !important; }
+
+.wiki::after { content: ''; display: block; clear: both; }
+
+/* ───────── RESPONSIVE ───────── */
+@media (max-width: 680px) {
+  nav { gap: 10px; padding: 0 16px; }
+  .logo-text { display: none; }
+  .nav-cats { gap: 2px; }
+  .cat-btn { padding: 5px 10px; font-size: 12px; }
+  #discBtn { font-size: 12px; padding: 6px 12px; }
+
+  .art-wrap { padding: 28px 20px 60px; }
+  .art-title { font-size: 32px; }
+  .landing h1 { font-size: 36px; }
+
+  .wiki { font-size: 17px; }
+  .wiki h2 { font-size: 24px; }
+  .wiki h3 { font-size: 20px; }
+
+  .wiki .thumb.tright,
+  .wiki .thumb.tleft { float: none !important; margin: 1em 0 !important; }
+
+  .wiki .infobox,
+  .wiki .infobox-3cols-child { float: none !important; max-width: 100% !important; margin: 1em 0 !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <div class="logo">
+    <span class="logo-orb"></span>
+    <span class="logo-text">WikiExplorer</span>
+  </div>
+
+  <div class="nav-cats">
+    <button class="cat-btn" data-t="literature">📚 Literature</button>
+    <button class="cat-btn" data-t="geopolitics">🌍 Geopolitics</button>
+    <button class="cat-btn" data-t="history">🏛 History</button>
+    <button class="cat-btn" data-t="culture">🎭 Culture</button>
+  </div>
+
+  <button id="discBtn" disabled>Discover →</button>
+</nav>
+
+<!-- ── MAIN ── -->
+<main id="main">
+  <div class="landing">
+    <h1>Explore the world,<br>one article at a <em>time.</em></h1>
+    <p>Pick a theme above, hit Discover, and fall into a random Wikipedia article.</p>
+    <p class="landing-hint">Literature · Geopolitics · History · Culture</p>
+  </div>
+</main>
+
+<script>
+const THEMES = {
+  literature: {
+    label: "Literature",
+    cats: [
+      "English-language_novels", "20th-century_novels", "19th-century_novels",
+      "Poetry_collections", "Plays_by_William_Shakespeare",
+      "Nobel_Prize_in_Literature_laureates", "Booker_Prize-winning_novels",
+      "Pulitzer_Prize_for_Fiction", "Short_story_collections",
+      "Epic_poems", "French_novels", "Literary_movements",
+      "American_novels", "Victorian_literature", "Romantic_poetry"
+    ]
+  },
+  geopolitics: {
+    label: "Geopolitics",
+    cats: [
+      "Cold_War", "Territorial_disputes",
+      "United_Nations_Security_Council_resolutions",
+      "International_treaties", "Geopolitics",
+      "International_crises", "Diplomacy",
+      "Wars_of_the_21st_century", "NATO",
+      "Foreign_policy", "Political_geography",
+      "Espionage", "International_sanctions"
+    ]
+  },
+  history: {
+    label: "History",
+    cats: [
+      "World_War_II", "World_War_I",
+      "Roman_emperors", "Pharaohs",
+      "Historical_battles", "Revolutions",
+      "Ancient_Greek_history", "Medieval_history",
+      "Byzantine_emperors", "Ancient_Egypt",
+      "Colonial_history", "History_of_Asia",
+      "Mongol_Empire", "Ottoman_Empire"
+    ]
+  },
+  culture: {
+    label: "Culture",
+    cats: [
+      "Greek_mythology", "Norse_mythology",
+      "Roman_mythology", "Egyptian_mythology",
+      "UNESCO_World_Heritage_Sites", "Art_movements",
+      "Archaeological_sites", "Folklore",
+      "Philosophical_movements", "Music_genres",
+      "World_Heritage_Sites_in_Asia",
+      "Architectural_styles", "Cultural_movements"
+    ]
+  }
+};
+
+const ACCENT = {
+  literature: 'var(--lit)',
+  geopolitics: 'var(--geo)',
+  history: 'var(--hist)',
+  culture: 'var(--cult)'
+};
+
+let activeTheme = null;
+let busy = false;
+
+// ── Category buttons ──
+document.querySelectorAll('.cat-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeTheme = btn.dataset.t;
+    document.getElementById('discBtn').disabled = false;
+  });
+});
+
+document.getElementById('discBtn').addEventListener('click', () => {
+  if (activeTheme && !busy) loadArticle(activeTheme);
+});
+
+// ── Core loader ──
+async function loadArticle(theme, attempt = 0) {
+  if (attempt > 8) { showErr(); return; }
+
+  busy = true;
+  const btn = document.getElementById('discBtn');
+  btn.disabled = true;
+  btn.textContent = 'Loading…';
+  showLoader();
+
+  try {
+    const cats = THEMES[theme].cats;
+    const cat  = cats[Math.floor(Math.random() * cats.length)];
+
+    // 1. Get pages in the category
+    const cRes = await fetch(
+      `https://en.wikipedia.org/w/api.php?action=query&list=categorymembers` +
+      `&cmtitle=Category:${encodeURIComponent(cat)}&cmlimit=500&cmtype=page` +
+      `&format=json&origin=*`
+    );
+    const cData  = await cRes.json();
+    const members = cData.query?.categorymembers;
+    if (!members?.length) return loadArticle(theme, attempt + 1);
+
+    // 2. Pick a random page
+    const page = members[Math.floor(Math.random() * members.length)];
+
+    // 3. Fetch the full article HTML
+    const aRes = await fetch(
+      `https://en.wikipedia.org/w/api.php?action=parse` +
+      `&page=${encodeURIComponent(page.title)}` +
+      `&format=json&prop=text|displaytitle&disablelimitreport=true&origin=*`
+    );
+    const aData = await aRes.json();
+    if (!aData.parse) return loadArticle(theme, attempt + 1);
+
+    const cleanedHtml = cleanHtml(aData.parse.text['*']);
+    renderArticle(
+      aData.parse.displaytitle,
+      cat.replace(/_/g, ' '),
+      theme,
+      cleanedHtml,
+      page.title
+    );
+
+  } catch (e) {
+    console.error(e);
+    if (attempt < 6) loadArticle(theme, attempt + 1);
+    else showErr();
+  } finally {
+    busy = false;
+    btn.disabled = false;
+    btn.textContent = 'Discover →';
+  }
+}
+
+// ── Clean up Wikipedia HTML ──
+function cleanHtml(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+
+  // Fix image URLs
+  doc.querySelectorAll('img').forEach(img => {
+    let s = img.getAttribute('src') || img.getAttribute('data-src') || '';
+    if (s.startsWith('//')) s = 'https:' + s;
+    if (s) img.setAttribute('src', s);
+    img.removeAttribute('data-src');
+    img.setAttribute('loading', 'lazy');
+    const ss = img.getAttribute('srcset');
+    if (ss) img.setAttribute('srcset', ss.replace(/\/\//g, 'https://'));
+  });
+
+  // Fix links → open in new tab
+  doc.querySelectorAll('a[href]').forEach(a => {
+    const h = a.getAttribute('href');
+    if (h?.startsWith('/wiki/')) {
+      a.setAttribute('href', 'https://en.wikipedia.org' + h);
+      a.setAttribute('target', '_blank');
+      a.setAttribute('rel', 'noopener noreferrer');
+    } else if (h?.startsWith('#')) {
+      a.removeAttribute('href');
+    } else if (h?.startsWith('//')) {
+      a.setAttribute('href', 'https:' + h);
+      a.setAttribute('target', '_blank');
+      a.setAttribute('rel', 'noopener noreferrer');
+    }
+  });
+
+  // Strip out Wikipedia chrome / non-content
+  [
+    '.mw-editsection', '.mw-editsection-bracket',
+    '.reflist', '.references', '.mw-references-wrap',
+    '.navbox', '.navbox-styles', '.navbox-inner',
+    '.ambox', '.tmbox', '.ombox', '.fmbox', '.cmbox', '.imbox',
+    '#toc', '.toc',
+    '.sistersitebox', '.hatnote',
+    '.noprint', '.mw-empty-elt', '.mw-hidden-cat-table',
+    '.catlinks', '.printfooter',
+    '.portalbox', '.stub', '.dablink',
+    '.shortdescription', '.mw-authority-control',
+    '#coordinates', '.geo-nondefault',
+    'style', 'link'
+  ].forEach(sel => {
+    doc.querySelectorAll(sel).forEach(el => el.remove());
+  });
+
+  // Remove inline reference superscripts
+  doc.querySelectorAll('sup.reference, sup[id^="cite"]').forEach(el => el.remove());
+
+  return doc.body.innerHTML;
+}
+
+// ── Render the article ──
+function renderArticle(title, catLabel, theme, html, pageName) {
+  document.getElementById('main').innerHTML = `
+    <div class="art-wrap">
+      <div class="art-super" style="color:${ACCENT[theme]}">${catLabel} — Wikipedia</div>
+      <h1 class="art-title">${title}</h1>
+      <div class="art-bar">
+        <a class="art-btn"
+           href="https://en.wikipedia.org/wiki/${encodeURIComponent(pageName)}"
+           target="_blank" rel="noopener noreferrer">
+          ↗ Open on Wikipedia
+        </a>
+        <button class="art-btn" onclick="loadArticle('${theme}')">↻ Next article</button>
+      </div>
+      <div class="wiki">${html}</div>
+    </div>
+  `;
+  window.scrollTo(0, 0);
+}
+
+// ── States ──
+function showLoader() {
+  document.getElementById('main').innerHTML = `
+    <div class="loader">
+      <div class="dots">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      </div>
+      <p>Finding your article…</p>
+    </div>
+  `;
+}
+
+function showErr() {
+  busy = false;
+  document.getElementById('main').innerHTML = `
+    <div class="loader">
+      <p style="color:var(--muted)">Couldn't find an article — please try again.</p>
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
