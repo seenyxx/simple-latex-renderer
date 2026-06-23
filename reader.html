@@ -502,63 +502,101 @@ nav {
 .wiki::after { content:''; display:block; clear:both; }
 
 /* ════════════════════════════════
+   MOBILE BOTTOM BAR (hidden desktop)
+════════════════════════════════ */
+.mobile-bar { display: none; }
+
+/* ════════════════════════════════
    MOBILE
 ════════════════════════════════ */
 @media (max-width: 680px) {
-  :root { --nav-h: 90px; }
+  :root { --nav-h: 44px; --bar-h: 60px; }
 
-  nav { flex-wrap: wrap; height: var(--nav-h); align-items: stretch; }
+  /* Slim single-row nav */
+  nav { height: var(--nav-h); flex-wrap: nowrap; }
+  .nav-cats { display: none; }
+  #discBtn  { display: none; }
+  .nav-logo { font-size: 13px; padding: 0 14px; }
+  .nav-logo-badge { display: none; }
+  .nav-right { border-left: none; padding: 0 14px; }
+  #wordCount { display: block; font-size: 12px; color: rgba(255,255,255,0.45); }
 
-  .nav-logo  { height: 48px; padding: 0 16px; font-size: 13px; }
-  .nav-right { height: 48px; margin-left: auto; padding: 0 14px; }
-  #wordCount { display: none; }
-  #discBtn   { height: 32px; font-size: 12px; padding: 0 14px; }
-
-  .nav-cats {
-    order: 3; width: 100%; height: 42px;
-    border-top: 1px solid rgba(255,255,255,0.08);
-    padding: 6px 8px;
-    gap: 4px;
-  }
-  .cat-btn {
-    font-size: 12px; padding: 0 12px;
-    margin: 0; border-radius: 5px;
-  }
-  .cat-btn.active::after { display: none; }
-
+  /* App shell — static so page scrolls naturally */
   #app {
     position: static;
     margin-top: var(--nav-h);
-    height: auto; min-height: calc(100vh - var(--nav-h));
+    padding-bottom: calc(var(--bar-h) + env(safe-area-inset-bottom, 0px));
+    height: auto;
+    min-height: calc(100vh - var(--nav-h));
     display: block;
   }
 
+  /* Full-width passage, no split */
   .split { flex-direction: column; height: auto; overflow: visible; }
-
   .passage-pane {
     flex: none !important; width: 100% !important;
-    overflow-y: visible; padding: 18px 16px;
+    overflow-y: visible; padding: 18px 16px 24px;
   }
+  .split-bar { display: none; }
+  .sidebar   { display: none; }
 
-  .split-bar { width: 100% !important; height: 4px; cursor: default; }
-  .split-bar::after { display: none; }
-
-  .sidebar {
-    flex: none; width: 100% !important;
-    border-top: none;
-    flex-direction: row;
-    flex-wrap: wrap;
+  /* Landing / loader */
+  .landing {
+    min-height: calc(100vh - var(--nav-h) - var(--bar-h));
+    padding: 36px 24px; gap: 14px;
   }
-
-  .sb-head { width: 100%; padding: 16px; }
-  .sb-body { flex-direction: row; flex-wrap: wrap; padding: 14px 16px; gap: 12px; }
-  .sb-stat { min-width: 120px; }
-  .sb-foot { width: 100%; flex-direction: row; padding: 12px 16px; gap: 8px; }
-  .sb-btn  { flex: 1; }
-
-  .landing, .loader { min-height: calc(100vh - var(--nav-h)); }
-  .landing { padding: 40px 24px; gap: 12px; }
   .landing h1 { font-size: 20px; }
+  .landing-cats { gap: 10px; }
+  .landing-cat  { font-size: 13px; padding: 8px 16px; }
+  .loader { min-height: calc(100vh - var(--nav-h) - var(--bar-h)); }
+
+  /* Fixed bottom bar */
+  .mobile-bar {
+    display: flex !important;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 200;
+    height: calc(var(--bar-h) + env(safe-area-inset-bottom, 0px));
+    padding: 0 12px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: #fff;
+    border-top: 1.5px solid #e2e8f0;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .m-cat {
+    width: 44px; height: 40px;
+    flex-shrink: 0;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 20px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all .12s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .m-cat:active { transform: scale(.91); }
+  .m-cat.active { border-color: var(--blue); background: #eff6ff; }
+
+  .m-new {
+    flex: 1;
+    height: 40px;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-family: var(--ui);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: -.01em;
+    -webkit-tap-highlight-color: transparent;
+    transition: background .12s, transform .1s;
+  }
+  .m-new:active:not(:disabled) { transform: scale(.97); }
+  .m-new:disabled { background: rgba(37,99,235,0.35); cursor: not-allowed; }
 }
 </style>
 </head>
@@ -597,6 +635,15 @@ nav {
       <span class="landing-cat">🎭 Culture</span>
     </div>
   </div>
+</div>
+
+<!-- ── MOBILE BOTTOM BAR ── -->
+<div class="mobile-bar">
+  <button class="m-cat" data-t="literature" title="Literature">📚</button>
+  <button class="m-cat" data-t="geopolitics" title="Geopolitics">🌍</button>
+  <button class="m-cat" data-t="history" title="History">🏛</button>
+  <button class="m-cat" data-t="culture" title="Culture">🎭</button>
+  <button class="m-new" id="mobileDiscBtn" disabled>New Passage</button>
 </div>
 
 <script>
@@ -706,17 +753,29 @@ function initResizer() {
   }, { passive: false });
 }
 
-/* ── Category buttons ── */
+/* ── Theme selection (syncs desktop nav + mobile bar) ── */
+function selectTheme(t) {
+  activeTheme = t;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.toggle('active', b.dataset.t === t));
+  document.querySelectorAll('.m-cat').forEach(b => b.classList.toggle('active', b.dataset.t === t));
+  document.getElementById('discBtn').disabled = false;
+  const mb = document.getElementById('mobileDiscBtn');
+  if (mb) mb.disabled = false;
+}
+
 document.querySelectorAll('.cat-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    activeTheme = btn.dataset.t;
-    document.getElementById('discBtn').disabled = false;
-  });
+  btn.addEventListener('click', () => selectTheme(btn.dataset.t));
+});
+
+document.querySelectorAll('.m-cat').forEach(btn => {
+  btn.addEventListener('click', () => selectTheme(btn.dataset.t));
 });
 
 document.getElementById('discBtn').addEventListener('click', () => {
+  if (activeTheme && !busy) loadArticle(activeTheme);
+});
+
+document.getElementById('mobileDiscBtn').addEventListener('click', () => {
   if (activeTheme && !busy) loadArticle(activeTheme);
 });
 
@@ -733,6 +792,8 @@ async function loadArticle(theme, attempt = 0) {
   document.getElementById('discBtn').disabled = true;
   document.getElementById('discBtn').textContent = 'Loading…';
   document.getElementById('wordCount').textContent = '';
+  const mb = document.getElementById('mobileDiscBtn');
+  if (mb) { mb.disabled = true; mb.textContent = 'Loading…'; }
   showLoader();
   try {
     const cats = THEMES[theme].cats;
@@ -762,6 +823,8 @@ async function loadArticle(theme, attempt = 0) {
     busy = false;
     document.getElementById('discBtn').disabled = false;
     document.getElementById('discBtn').textContent = 'New Passage';
+    const mb2 = document.getElementById('mobileDiscBtn');
+    if (mb2) { mb2.disabled = false; mb2.textContent = 'New Passage'; }
   }
 }
 
