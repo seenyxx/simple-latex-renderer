@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UCAT VR Reader</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --blue:    #2563eb;
+  --blue-dk: #1d4ed8;
+  --nav-bg:  #0f172a;
+  --nav-h:   52px;
+  --ui:      'Inter', system-ui, -apple-system, sans-serif;
+}
+
+html, body {
+  height: 100%;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
+  color: #000;
+  background: #fff;
+}
+
+/* ════════════════════════════════
+   NAV
+════════════════════════════════ */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  height: var(--nav-h);
+  background: var(--nav-bg);
+  display: flex;
+  align-items: stretch;
+}
+
+.nav-logo {
+  font-family: var(--ui);
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  padding: 0 22px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  border-right: 1px solid rgba(255,255,255,0.08);
+  letter-spacing: -.01em;
+}
+
+.nav-logo-badge {
+  font-size: 10px;
+  font-weight: 600;
+  color: #93c5fd;
+  background: rgba(147,197,253,0.12);
+  border: 1px solid rgba(147,197,253,0.25);
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: .05em;
+}
+
+.nav-cats {
+  display: flex;
+  align-items: stretch;
+  flex: 1;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 0 8px;
+  gap: 2px;
+}
+.nav-cats::-webkit-scrollbar { display: none; }
+
+.cat-btn {
+  font-family: var(--ui);
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.5);
+  background: transparent;
+  border: none;
+  padding: 0 16px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  position: relative;
+  transition: color .15s, background .15s;
+  border-radius: 6px;
+  margin: 8px 0;
+}
+.cat-btn:hover {
+  color: rgba(255,255,255,0.85);
+  background: rgba(255,255,255,0.07);
+}
+.cat-btn.active {
+  color: #fff;
+  background: rgba(255,255,255,0.1);
+  font-weight: 600;
+}
+/* Blue bottom tick for active */
+.cat-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -8px; left: 16px; right: 16px;
+  height: 2px;
+  background: #60a5fa;
+  border-radius: 1px 1px 0 0;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 18px;
+  flex-shrink: 0;
+  border-left: 1px solid rgba(255,255,255,0.08);
+}
+
+#wordCount {
+  font-family: var(--ui);
+  font-size: 12px;
+  color: rgba(255,255,255,0.38);
+  white-space: nowrap;
+}
+
+#discBtn {
+  height: 34px;
+  padding: 0 18px;
+  background: var(--blue);
+  border: none;
+  border-radius: 7px;
+  color: #fff;
+  font-family: var(--ui);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+  white-space: nowrap;
+  letter-spacing: -.01em;
+}
+#discBtn:hover:not(:disabled) {
+  background: var(--blue-dk);
+  transform: translateY(-1px);
+}
+#discBtn:active:not(:disabled) { transform: translateY(0); }
+#discBtn:disabled { background: rgba(37,99,235,0.35); cursor: not-allowed; }
+
+/* ════════════════════════════════
+   APP SHELL
+════════════════════════════════ */
+#app {
+  position: fixed;
+  top: var(--nav-h); left: 0; right: 0; bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ════════════════════════════════
+   LANDING
+════════════════════════════════ */
+.landing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 14px;
+  padding: 60px 40px;
+  width: 100%; height: 100%;
+  font-family: var(--ui);
+}
+
+.landing-icon {
+  width: 52px; height: 52px;
+  background: #eff6ff;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+  margin-bottom: 6px;
+}
+
+.landing h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.25;
+  letter-spacing: -.02em;
+}
+
+.landing p {
+  font-size: 14px;
+  color: #64748b;
+  max-width: 340px;
+  line-height: 1.65;
+}
+
+.landing-cats {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.landing-cat {
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 5px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 100px;
+  color: #475569;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: all .15s;
+}
+.landing-cat:hover {
+  border-color: #94a3b8;
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+/* ════════════════════════════════
+   LOADER
+════════════════════════════════ */
+.loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  width: 100%; height: 100%;
+  font-family: var(--ui);
+}
+
+.dots { display: flex; gap: 7px; }
+.dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #cbd5e1;
+  animation: dp 1.2s ease-in-out infinite;
+}
+.dot:nth-child(2) { animation-delay: .15s; }
+.dot:nth-child(3) { animation-delay: .3s; }
+@keyframes dp {
+  0%,80%,100% { opacity:.25; transform:scale(.75); }
+  40%         { opacity:1;   transform:scale(1); }
+}
+.loader p {
+  font-size: 13px;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+/* ════════════════════════════════
+   SPLIT LAYOUT
+════════════════════════════════ */
+.split {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.passage-pane {
+  flex: 1 1 62%;
+  min-width: 160px;
+  overflow-y: auto;
+  padding: 22px 28px;
+  background: #fff;
+}
+
+/* Draggable bar */
+.split-bar {
+  width: 6px;
+  flex-shrink: 0;
+  background: var(--blue);
+  cursor: col-resize;
+  position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background .12s;
+}
+.split-bar:hover { background: var(--blue-dk); }
+.split-bar::after {
+  content: '';
+  position: absolute;
+  top: calc(50% - 18px);
+  left: 1px;
+  width: 4px; height: 36px;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255,255,255,.6) 0,
+    rgba(255,255,255,.6) 3px,
+    transparent 3px, transparent 7px
+  );
+  border-radius: 1px;
+}
+
+/* ════════════════════════════════
+   SIDEBAR
+════════════════════════════════ */
+.sidebar {
+  flex: 0 0 270px;
+  min-width: 160px;
+  overflow-y: auto;
+  background: #f8fafc;
+  border-left: none;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--ui);
+}
+
+.sb-head {
+  padding: 20px 20px 18px;
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.sb-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: #94a3b8;
+  margin-bottom: 7px;
+}
+
+.sb-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.4;
+}
+
+.sb-body {
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.sb-stat { display: flex; flex-direction: column; gap: 3px; }
+
+.sb-stat-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  color: #94a3b8;
+}
+
+.sb-stat-value {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #334155;
+}
+
+.sb-foot {
+  padding: 16px 20px 20px;
+  border-top: 1px solid #e2e8f0;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sb-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 9px 14px;
+  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  background: #fff;
+  color: #374151;
+  font-family: var(--ui);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all .12s;
+}
+.sb-btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+.sb-btn-primary {
+  background: var(--blue);
+  color: #fff;
+  border-color: var(--blue);
+}
+.sb-btn-primary:hover {
+  background: var(--blue-dk);
+  border-color: var(--blue-dk);
+  color: #fff;
+}
+
+/* ════════════════════════════════
+   ARTICLE TITLE (reading pane)
+════════════════════════════════ */
+.art-title {
+  font-size: 15px;
+  font-weight: bold;
+  color: #000;
+  margin-bottom: 14px;
+  line-height: 1.35;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 10px;
+}
+
+/* ════════════════════════════════
+   WIKIPEDIA BODY — fully flat
+   (DO NOT CHANGE)
+════════════════════════════════ */
+.wiki {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
+  line-height: 1.44;
+  color: #000;
+}
+
+.wiki,
+.wiki * {
+  font-weight: normal !important;
+  font-style:  normal !important;
+  text-decoration: none !important;
+}
+
+.wiki a {
+  color: #000 !important;
+  text-decoration: none !important;
+  cursor: text;
+  pointer-events: none;
+}
+
+.wiki p { margin-bottom: 0.85em; }
+
+.wiki h2,
+.wiki h3,
+.wiki h4,
+.wiki h5,
+.wiki h6 { display: none !important; }
+
+.wiki ul, .wiki ol { padding-left: 1.4em; margin-bottom: 0.85em; }
+.wiki li { margin-bottom: 0.2em; }
+
+.wiki .wikitable,
+.wiki table:not([class*="infobox"]) {
+  border-collapse: collapse;
+  font-size: 13px;
+  margin: 1em 0;
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+}
+.wiki .wikitable td, .wiki .wikitable th,
+.wiki table:not([class*="infobox"]) td,
+.wiki table:not([class*="infobox"]) th {
+  padding: 5px 8px;
+  border: 1px solid #ccc;
+  vertical-align: top;
+}
+.wiki .wikitable th,
+.wiki table:not([class*="infobox"]) th {
+  background: #f5f5f5;
+}
+
+.wiki blockquote {
+  border-left: 2px solid #ccc;
+  margin: 0.8em 0;
+  padding: 0.4em 1em;
+}
+
+.wiki img, .wiki figure, .wiki figcaption,
+.wiki .thumb, .wiki .thumbinner, .wiki .thumbcaption, .wiki .thumbimage,
+.wiki .gallery, .wiki .gallerybox, .wiki .magnify,
+.wiki .infobox, .wiki .infobox-3cols-child, .wiki .infobox-full-data,
+.wiki .sidebar-outer, .wiki .vevent, .wiki [class*="infobox"],
+.wiki .mw-editsection, .wiki .mw-editsection-bracket,
+.wiki .reflist, .wiki .references, .wiki .mw-references-wrap,
+.wiki .navbox, .wiki .navbox-styles, .wiki .navbox-inner,
+.wiki .ambox, .wiki .tmbox, .wiki .ombox, .wiki .fmbox, .wiki .cmbox, .wiki .imbox,
+.wiki .mbox-text, .wiki .mbox-image,
+.wiki .sistersitebox, .wiki .hatnote,
+.wiki #toc, .wiki .toc,
+.wiki .noprint, .wiki .mw-empty-elt, .wiki .catlinks, .wiki .printfooter,
+.wiki .portalbox, .wiki .stub, .wiki .dablink,
+.wiki .shortdescription, .wiki .mw-authority-control,
+.wiki #coordinates, .wiki .geo-nondefault { display: none !important; }
+.wiki sup.reference, .wiki sup[id^="cite"] { display: none !important; }
+.wiki::after { content:''; display:block; clear:both; }
+
+/* ════════════════════════════════
+   MOBILE
+════════════════════════════════ */
+@media (max-width: 680px) {
+  :root { --nav-h: 90px; }
+
+  nav { flex-wrap: wrap; height: var(--nav-h); align-items: stretch; }
+
+  .nav-logo  { height: 48px; padding: 0 16px; font-size: 13px; }
+  .nav-right { height: 48px; margin-left: auto; padding: 0 14px; }
+  #wordCount { display: none; }
+  #discBtn   { height: 32px; font-size: 12px; padding: 0 14px; }
+
+  .nav-cats {
+    order: 3; width: 100%; height: 42px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding: 6px 8px;
+    gap: 4px;
+  }
+  .cat-btn {
+    font-size: 12px; padding: 0 12px;
+    margin: 0; border-radius: 5px;
+  }
+  .cat-btn.active::after { display: none; }
+
+  #app {
+    position: static;
+    margin-top: var(--nav-h);
+    height: auto; min-height: calc(100vh - var(--nav-h));
+    display: block;
+  }
+
+  .split { flex-direction: column; height: auto; overflow: visible; }
+
+  .passage-pane {
+    flex: none !important; width: 100% !important;
+    overflow-y: visible; padding: 18px 16px;
+  }
+
+  .split-bar { width: 100% !important; height: 4px; cursor: default; }
+  .split-bar::after { display: none; }
+
+  .sidebar {
+    flex: none; width: 100% !important;
+    border-top: none;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .sb-head { width: 100%; padding: 16px; }
+  .sb-body { flex-direction: row; flex-wrap: wrap; padding: 14px 16px; gap: 12px; }
+  .sb-stat { min-width: 120px; }
+  .sb-foot { width: 100%; flex-direction: row; padding: 12px 16px; gap: 8px; }
+  .sb-btn  { flex: 1; }
+
+  .landing, .loader { min-height: calc(100vh - var(--nav-h)); }
+  .landing { padding: 40px 24px; gap: 12px; }
+  .landing h1 { font-size: 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <div class="nav-logo">
+    UCAT Reader
+    <span class="nav-logo-badge">VR</span>
+  </div>
+
+  <div class="nav-cats">
+    <button class="cat-btn" data-t="literature">📚 Literature</button>
+    <button class="cat-btn" data-t="geopolitics">🌍 Geopolitics</button>
+    <button class="cat-btn" data-t="history">🏛 History</button>
+    <button class="cat-btn" data-t="culture">🎭 Culture</button>
+  </div>
+
+  <div class="nav-right">
+    <span id="wordCount"></span>
+    <button id="discBtn" disabled>New Passage</button>
+  </div>
+</nav>
+
+<!-- ── APP ── -->
+<div id="app">
+  <div class="landing">
+    <div class="landing-icon">📖</div>
+    <h1>Verbal Reasoning Practice</h1>
+    <p>Select a topic below and hit <strong>New Passage</strong> to load a full Wikipedia article in UCAT reading format.</p>
+    <div class="landing-cats">
+      <span class="landing-cat">📚 Literature</span>
+      <span class="landing-cat">🌍 Geopolitics</span>
+      <span class="landing-cat">🏛 History</span>
+      <span class="landing-cat">🎭 Culture</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const THEMES = {
+  literature: {
+    label: "Literature",
+    cats: [
+      "English-language_novels","20th-century_novels","19th-century_novels",
+      "Poetry_collections","Plays_by_William_Shakespeare",
+      "Nobel_Prize_in_Literature_laureates","Booker_Prize-winning_novels",
+      "Pulitzer_Prize_for_Fiction","Short_story_collections",
+      "Epic_poems","French_novels","Literary_movements",
+      "American_novels","Victorian_literature","Modernist_literature"
+    ]
+  },
+  geopolitics: {
+    label: "Geopolitics",
+    cats: [
+      "Cold_War","Territorial_disputes",
+      "United_Nations_Security_Council_resolutions",
+      "International_treaties","Geopolitics",
+      "International_crises","Diplomacy",
+      "Wars_of_the_21st_century","NATO",
+      "Foreign_policy","Decolonisation","Espionage"
+    ]
+  },
+  history: {
+    label: "History",
+    cats: [
+      "World_War_II","World_War_I","Roman_emperors","Pharaohs",
+      "Historical_battles","Revolutions","Ancient_Greek_history",
+      "Medieval_history","Byzantine_emperors","Ancient_Egypt",
+      "Colonial_history","History_of_Asia","Mongol_Empire",
+      "Ottoman_Empire","History_of_science"
+    ]
+  },
+  culture: {
+    label: "Culture",
+    cats: [
+      "Greek_mythology","Norse_mythology","Roman_mythology","Egyptian_mythology",
+      "UNESCO_World_Heritage_Sites","Art_movements","Archaeological_sites",
+      "Folklore","Philosophical_movements","Music_genres",
+      "Architectural_styles","Cultural_movements","Ethical_theories"
+    ]
+  }
+};
+
+const BAD_PREFIXES  = ['list of','lists of','index of','outline of','glossary of','bibliography of','timeline of','chronology of','comparison of'];
+const BAD_CONTAINS  = ['(disambiguation)','portal:','wikipedia:','template:','file:','category:'];
+const STRIP_SECTIONS = ['see also','references','external links','further reading','notes','bibliography','footnotes','citations','sources','works cited'];
+
+let activeTheme  = null;
+let busy         = false;
+let passageWidth = null;
+
+/* ── Resizer (global listeners, never duplicated) ── */
+let isResizing = false, resizeStartX = 0, resizeStartW = 0;
+
+document.addEventListener('mousemove', e => {
+  if (!isResizing) return;
+  const passage = document.querySelector('.passage-pane');
+  const split   = document.querySelector('.split');
+  if (!passage || !split) { isResizing = false; return; }
+  const newW = Math.max(160, Math.min(split.getBoundingClientRect().width - 160, resizeStartW + e.clientX - resizeStartX));
+  passage.style.flex  = 'none';
+  passage.style.width = newW + 'px';
+  passageWidth = newW;
+});
+
+document.addEventListener('mouseup', () => {
+  if (!isResizing) return;
+  isResizing = false;
+  document.body.style.cursor = document.body.style.userSelect = '';
+});
+
+document.addEventListener('touchmove', e => {
+  if (!isResizing) return;
+  const passage = document.querySelector('.passage-pane');
+  const split   = document.querySelector('.split');
+  if (!passage || !split) { isResizing = false; return; }
+  const newW = Math.max(160, Math.min(split.getBoundingClientRect().width - 160, resizeStartW + e.touches[0].clientX - resizeStartX));
+  passage.style.flex  = 'none';
+  passage.style.width = newW + 'px';
+  passageWidth = newW;
+}, { passive: false });
+
+document.addEventListener('touchend', () => { isResizing = false; });
+
+function initResizer() {
+  const bar     = document.querySelector('.split-bar');
+  const passage = document.querySelector('.passage-pane');
+  if (!bar || !passage) return;
+  if (passageWidth !== null) { passage.style.flex = 'none'; passage.style.width = passageWidth + 'px'; }
+  bar.addEventListener('mousedown', e => {
+    isResizing = true;
+    resizeStartX = e.clientX;
+    resizeStartW = document.querySelector('.passage-pane').getBoundingClientRect().width;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+  bar.addEventListener('touchstart', e => {
+    isResizing = true;
+    resizeStartX = e.touches[0].clientX;
+    resizeStartW = document.querySelector('.passage-pane').getBoundingClientRect().width;
+    e.preventDefault();
+  }, { passive: false });
+}
+
+/* ── Category buttons ── */
+document.querySelectorAll('.cat-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeTheme = btn.dataset.t;
+    document.getElementById('discBtn').disabled = false;
+  });
+});
+
+document.getElementById('discBtn').addEventListener('click', () => {
+  if (activeTheme && !busy) loadArticle(activeTheme);
+});
+
+function isBadTitle(title) {
+  const t = title.toLowerCase();
+  if (BAD_PREFIXES.some(p => t.startsWith(p))) return true;
+  if (BAD_CONTAINS.some(p => t.includes(p)))   return true;
+  return false;
+}
+
+async function loadArticle(theme, attempt = 0) {
+  if (attempt > 10) { showErr(); return; }
+  busy = true;
+  document.getElementById('discBtn').disabled = true;
+  document.getElementById('discBtn').textContent = 'Loading…';
+  document.getElementById('wordCount').textContent = '';
+  showLoader();
+  try {
+    const cats = THEMES[theme].cats;
+    const cat  = cats[Math.floor(Math.random() * cats.length)];
+    const cRes  = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=categorymembers&cmtitle=Category:${encodeURIComponent(cat)}&cmlimit=500&cmtype=page&format=json&origin=*`);
+    const cData   = await cRes.json();
+    const members = cData.query?.categorymembers;
+    if (!members?.length) return loadArticle(theme, attempt + 1);
+    const valid = members.filter(m => !isBadTitle(m.title));
+    if (!valid.length) return loadArticle(theme, attempt + 1);
+    const page = valid[Math.floor(Math.random() * valid.length)];
+    const aRes  = await fetch(`https://en.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(page.title)}&format=json&prop=text|displaytitle&disablelimitreport=true&origin=*`);
+    const aData = await aRes.json();
+    if (!aData.parse) return loadArticle(theme, attempt + 1);
+    const html = cleanHtml(aData.parse.text['*']);
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    const paraText = Array.from(tmp.querySelectorAll('p')).map(p => p.textContent.trim()).join(' ');
+    if (paraText.length < 500) return loadArticle(theme, attempt + 1);
+    const wordCount = paraText.split(/\s+/).filter(Boolean).length;
+    renderArticle(aData.parse.displaytitle, cat.replace(/_/g,' '), theme, html, page.title, wordCount);
+  } catch(e) {
+    console.error(e);
+    if (attempt < 8) loadArticle(theme, attempt + 1);
+    else showErr();
+  } finally {
+    busy = false;
+    document.getElementById('discBtn').disabled = false;
+    document.getElementById('discBtn').textContent = 'New Passage';
+  }
+}
+
+function cleanHtml(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  doc.querySelectorAll('img,figure,figcaption,.thumb,.thumbinner,.thumbcaption,.thumbimage,.gallery,.gallerybox,.magnify,audio,video').forEach(el => el.remove());
+  doc.querySelectorAll('.infobox,.infobox-3cols-child,.infobox-full-data,.sidebar,.vevent,[class*="infobox"]').forEach(el => el.remove());
+  removeSections(doc);
+  doc.querySelectorAll('.mw-editsection,.mw-editsection-bracket,.reflist,.references,.mw-references-wrap,.navbox,.navbox-styles,.navbox-inner,.ambox,.tmbox,.ombox,.fmbox,.cmbox,.imbox,.mbox-text,.mbox-image,.sistersitebox,.hatnote,#toc,.toc,.noprint,.mw-empty-elt,.catlinks,.printfooter,.portalbox,.stub,.dablink,.shortdescription,.mw-authority-control,#coordinates,.geo-nondefault,sup.reference,style,link').forEach(el => el.remove());
+  doc.querySelectorAll('a[href]').forEach(a => {
+    const h = a.getAttribute('href');
+    if (h?.startsWith('/wiki/'))     { a.setAttribute('href','https://en.wikipedia.org'+h); a.setAttribute('target','_blank'); a.setAttribute('rel','noopener noreferrer'); }
+    else if (h?.startsWith('#'))     { a.removeAttribute('href'); }
+    else if (h?.startsWith('//'))    { a.setAttribute('href','https:'+h); a.setAttribute('target','_blank'); a.setAttribute('rel','noopener noreferrer'); }
+  });
+  return doc.body.innerHTML;
+}
+
+function removeSections(doc) {
+  doc.querySelectorAll('h2').forEach(h2 => {
+    const hl = h2.querySelector('.mw-headline');
+    if (!hl || !STRIP_SECTIONS.includes(hl.textContent.trim().toLowerCase())) return;
+    let node = h2.nextElementSibling;
+    h2.remove();
+    while (node) { const next = node.nextElementSibling; if (node.tagName === 'H2') break; node.remove(); node = next; }
+  });
+}
+
+function renderArticle(title, catLabel, theme, html, pageName, wordCount) {
+  const readMins = Math.ceil(wordCount / 230);
+  document.getElementById('wordCount').textContent = `~${wordCount.toLocaleString()} words · ${readMins} min`;
+
+  document.getElementById('app').innerHTML = `
+    <div class="split">
+
+      <div class="passage-pane">
+        <div class="art-title">${title}</div>
+        <div class="wiki">${html}</div>
+      </div>
+
+      <div class="split-bar"></div>
+
+      <div class="sidebar">
+        <div class="sb-head">
+          <div class="sb-eyebrow">Current passage</div>
+          <div class="sb-title">${title}</div>
+        </div>
+
+        <div class="sb-body">
+          <div class="sb-stat">
+            <div class="sb-stat-label">Category</div>
+            <div class="sb-stat-value">${catLabel}</div>
+          </div>
+          <div class="sb-stat">
+            <div class="sb-stat-label">Word count</div>
+            <div class="sb-stat-value">~${wordCount.toLocaleString()}</div>
+          </div>
+          <div class="sb-stat">
+            <div class="sb-stat-label">Reading time</div>
+            <div class="sb-stat-value">${readMins} min${readMins !== 1 ? 's' : ''}</div>
+          </div>
+        </div>
+
+        <div class="sb-foot">
+          <button class="sb-btn sb-btn-primary" onclick="loadArticle('${theme}')">
+            ↻ New Passage
+          </button>
+          <a class="sb-btn"
+             href="https://en.wikipedia.org/wiki/${encodeURIComponent(pageName)}"
+             target="_blank" rel="noopener noreferrer">
+            ↗ Wikipedia
+          </a>
+        </div>
+      </div>
+
+    </div>
+  `;
+
+  initResizer();
+  const pp = document.querySelector('.passage-pane');
+  if (pp) pp.scrollTop = 0;
+}
+
+function showLoader() {
+  document.getElementById('app').innerHTML = `
+    <div class="loader">
+      <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <p>Loading passage…</p>
+    </div>`;
+}
+
+function showErr() {
+  busy = false;
+  document.getElementById('app').innerHTML = `
+    <div class="loader"><p>Couldn't find a suitable passage — please try again.</p></div>`;
+}
+</script>
+</body>
+</html>
